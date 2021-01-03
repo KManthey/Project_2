@@ -1,0 +1,39 @@
+/* .iframeContainer {
+  padding: 20px;
+  border: 1px solid #e3e3e3;
+} */
+
+#bubble {
+  margin-bottom: 30px;
+}
+
+.container{
+  margin-top:40px;
+  min-height:100vh;
+  min-width:80vw;
+  text-align:center;
+}
+.BarChart{
+  margin-top:40px;
+  min-height:100vh;
+  min-width:80vw;
+  text-align:center;
+}
+section.row{
+  margin-top:20px;
+}
+.instructions{
+  min-height:100px;
+  border:1px solid black;
+}
+
+.chart-section{
+  min-height:400px;
+  border:1px solid black;
+  margin-top:20px;
+}
+div.col-6{
+  border:1px solid black;
+  min-height:100%;
+  
+}
