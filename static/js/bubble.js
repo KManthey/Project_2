@@ -46,7 +46,7 @@ d3.json("/api/v1.0/nutrition").then(function(nData, err) {
       // console.log(nutrition.nutritional_values.protein_g)
       nutrition.item_name = nutrition.item_name;
       // console.log(nutrition.item_name)
-      nutrition.item_id = nutrition.item_id
+      nutrition.item_id = +nutrition.item_id
       // console.log(nutrition.item_id)
       });
       
@@ -84,8 +84,8 @@ var chosenYAxis = "calories";
 function yScale(nutritionData, chosenYAxis) {
   // create scales
   var yLinearScale = d3.scaleLinear()
-          .domain([d3.min(nutritionData, d => d.nutritional_values.calories) * 0.8,
-          d3.max(nutritionData, d => d.nutritional_values.calories) * 1.2])
+          .domain([d3.min(nutritionData, d => d.nutritional_values[chosenYAxis]) * 0.8,
+          d3.max(nutritionData, d => d.nutritional_values[chosenYAxis]) * 1.2])
           .range([height, 0]);
   return yLinearScale;
 }
@@ -107,7 +107,9 @@ console.log(circlesGroup)
   circlesGroup.transition()
     .duration(1000)
     .attr("cx", d => newXScale(d.item_id))
-    .attr("cy", d => newYScale(d.nutritional_values.calories));
+    .attr("cy", d => {
+      console.log(d.nutritional_values[chosenYAxis])
+      return newYScale(d.nutritional_values[chosenYAxis])});
 
   return circlesGroup;
 }  
@@ -145,7 +147,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
           //distance from the circle
           .html(function(d) {
             // return (`${d.state}<br>Poverty: ${d.poverty}<br>Healthcare: ${d.healthcare}`);
-            return (`${d.item_name}<br>X: ${d.item_id}<br>Y: ${d.nutritional_values.calories}`);
+            return (`${d.item_name}<br>${chosenYAxis}: ${d.nutritional_values[chosenYAxis]}`);
             });
     circlesGroup.call(toolTip);
     // console.log("after line 143")
@@ -165,7 +167,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
         // Create y scale functions
         var yLinearScale = d3.scaleLinear()
 
-          .domain([0, d3.max(nutritionData, d => d)])
+          .domain([0, d3.max(nutritionData, d => d.nutritional_values[chosenYAxis])])
           .range([height, 0]);
 
         // Initial axis function
@@ -255,8 +257,10 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
         .append("circle")
         .classed("itemCircle", true)
         .attr("cx", d => xLinearScale(d.item_id))
-        .attr("cy", d => yLinearScale(d.nutritional_values.calories))
-        .attr("r", "15")
+        .attr("cy", d => {
+          console.log(d.nutritional_values[chosenYAxis])
+          return yLinearScale(d.nutritional_values[chosenYAxis])})
+        .attr("r", "10")
         // .append("text")
         .attr("opacity", ".5")
         // .style("font-size", "15px")
@@ -270,7 +274,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
         .append("text")
         .classed("itemText", true)
         .attr("x", d=> xLinearScale(d.item_id))
-        .attr("y", (d, i)=> yLinearScale(d.nutritional_values.calories))
+        .attr("y", (d, i)=> yLinearScale(d.nutritional_values[chosenYAxis]))
         .style("font-size", "15px")
         .style("text-anchor", "middle")
         .style("fill", "white")
@@ -279,7 +283,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
       function renderAbbr (itemLabels, xLinearScale, yLinearScale, chosenXAxis, chosenYAxis) {
         itemLabels.transition().duration(1000)
         .attr("x", d=> xLinearScale(d.item_id))
-        .attr("y", (d, i)=> yLinearScale(d.nutritional_values.calories))
+        .attr("y", (d, i)=> yLinearScale(d.nutritional_values[chosenYAxis]))
         return itemLabels;
       }
 
@@ -360,9 +364,9 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
 
         // replaces chosenXAxis with value
         chosenYAxis = value;
-
+        
     
-        // console.log(chosenXAxis)
+        console.log(chosenYAxis)
 
         // functions here found above csv import
         // updates y scale for new data
