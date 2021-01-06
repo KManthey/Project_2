@@ -13,7 +13,7 @@ from flask import Flask, render_template, redirect
 # Database Setup
 #################################################
 
-engine = create_engine("sqlite:///Resources/fastfood_nutritional_info.sqlite", echo=False)
+engine = create_engine("sqlite:///database/fastfood_nutritional_info.sqlite", echo=False)
 
 # reflect an existing database into a new model
 Base = automap_base()
@@ -52,6 +52,8 @@ def nutrition():
 
     # Create a dictionary to store the item_names_list
     item_names_dict = {}
+    #restaurant_names_dict = {}
+    #category_names_dict = {}
 
     #Create the session (link) from Python to the DB
     session= Session(engine)
@@ -66,7 +68,7 @@ def nutrition():
     # Create an array to store the information
     menu_item_list = []
 
-    # Loop throught the array to extract the item deatails
+    # Loop throught the array to extract the item details
     for item in nutritional_info:
      value = item[0]
      # Create a dictionary to store the item information
@@ -109,54 +111,43 @@ def nutrition():
      menu_item_list.append(item_dict)
 
     # Append the menu_item_list to the item_names_dict 
+
     item_names_dict["nutrition"] = menu_item_list
 
     ####### Create a a list for the items name ######
     
     menu_items_name = session.query(Menu_items.item_name)
+    restaurant_names = session.query(Restaurants.name)
+    category_names = session.query(Categories.category_name)
 
     # Create an array to store the information
     item_names_list = []
+    restaurant_names_list = []
+    category_names_list = []
 
     # Loop throught the array to extract the names from the query
     for name in menu_items_name:
         for item in name:
             item_names_list.append(item)
     
-    ####### Create a a list for the restaurants name ######
-    
-    restaurant_names = session.query(Restaurants.name)
+    for name in restaurant_names:
+        for item in name:
+            restaurant_names_list.append(item)
 
-    # Create an array to store the information
-    restaurant_names_list = []
+    for name in category_names:
+        for item in name:
+            category_names_list.append(item)
 
-    # Loop throught the array to extract the names from the query
-    for restaurant in restaurant_names:
-        for name in restaurant:
-            restaurant_names_list.append(name)
-
-    ####### Create a a list for the categories name ######
-    
-    category_names = session.query(Categories.category_name)
-
-    # Create an array to store the information
-    category_names_list = []
-
-    # Loop throught the array to extract the names from the query
-    for category in category_names:
-        for name in category:
-            category_names_list.append(name)
-    
     # Close the session
     session.close
 
-    item_names_dict["names"] = item_names_list
-    item_names_dict["restaurants"] = restaurant_names_list
-    item_names_dict["categories"] = category_names_list
+    #item_names_dict["names"] = item_names_list
+    #restaurant_names_dict["restaurants"] = restaurant_names_list
+    #category_names_dict["categories"] = category_names_list
 
-    
-    return jsonify(item_names_dict)
-    
+    return jsonify(item_names_dict, item_names_list, restaurant_names_list, category_names_list)
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug
+    =True)

@@ -27,37 +27,47 @@ var height = svgHeight - margin.top - margin.bottom;
 
 d3.json("/api/v1.0/nutrition").then(function(nData, err) {
   if (err) throw err;
-nData = nData.nutrition
-// Parse Data/Cast as numbers -- I think these are already numeric
-      nData.forEach(function(data) {
-      data.restaurants = data.restaurants
-      data.calories = data.nutritional_values.calories;
-      data.carbohydrates_g = data.nutritional_values.carbohydrates_g;
-      data.sugars_g = data.nutritional_values.sugars_g;
-      data.item_name = data.item_name;
+  // set the initial parameters for X axis
+  var chosenXAxis = "mcdonalds";
+  var nutritionData = nData.nutrition
+  var restaurants = nData.restaurants
+  nutritionData = nutritionData.filter(nutrition=>nutrition.restaurant === chosenXAxis)
+  // console.log(nutritionData)
+  // console.log(nutrition)
+  // console.log(restaurants)
+// Parse Data/Cast as numbers
+      nutritionData.forEach(function(nutrition) {
+        // if (nutrition.restaurant === "chosenXAxis") {
+            nutrition.nutritional_values.calories = +nutrition.nutritional_values.calories;
+      // console.log(nutrition.nutritional_values.calories)
+      nutrition.nutritional_values.carbohydrates_g = +nutrition.nutritional_values.carbohydrates_g;
+      // console.log(nutrition.nutritional_values.carbohydrates_g)
+      nutrition.nutritional_values.protein_g = +nutrition.nutritional_values.protein_g;
+      // console.log(nutrition.nutritional_values.protein_g)
+      nutrition.item_name = nutrition.item_name;
+      // console.log(nutrition.item_name)
+      nutrition.item_id = nutrition.item_id
+      // console.log(nutrition.item_id)
       });
       
 
-// set the initial parameters for X axis
-var chosenXAxis = "mcdonalds";
-
 // provide axis label click functionality to update x-scale
-function xScale(nData, chosenXAxis) {
-  console.log(chosenXAxis)
-  console.log(nData)
+function xScale(nutritionData, chosenXAxis) {
+  // console.log(chosenXAxis)
+  // console.log(nutritionData)
   // create scales
   var xLinearScale = d3.scaleLinear()
-          .domain([d3.min(nData, d => d[chosenXAxis]) * 0.8,
-          d3.max(nData, d => d[chosenXAxis]) * 1.2])
+          .domain([d3.min(nutritionData, d => d.item_id) * 0.8,
+          d3.max(nutritionData, d => d.item_id) * 1.2])
           .range([0, width]);
-          console.log(xLinearScale)
+          // console.log(xLinearScale)
   return xLinearScale;
 }
   
 // function used for updating xAxis var upon click on axis label
 function renderxAxes(newXScale, xAxis) {
   console.log(newXScale)
-  console.log(xAxis)
+  // console.log(xAxis)
   var bottomAxis = d3.axisBottom(newXScale);
 
   xAxis.transition()
@@ -71,11 +81,11 @@ function renderxAxes(newXScale, xAxis) {
 var chosenYAxis = "calories";
 
 // provide axis label click functionality to update x-scale
-function yScale(nData, chosenYAxis) {
+function yScale(nutritionData, chosenYAxis) {
   // create scales
   var yLinearScale = d3.scaleLinear()
-          .domain([d3.min(nData, d => d[chosenYAxis]) * 0.8,
-          d3.max(nData, d => d[chosenYAxis]) * 1.2])
+          .domain([d3.min(nutritionData, d => d.nutritional_values.calories) * 0.8,
+          d3.max(nutritionData, d => d.nutritional_values.calories) * 1.2])
           .range([height, 0]);
   return yLinearScale;
 }
@@ -96,8 +106,8 @@ function renderCircles(circlesGroup, newXScale, newYScale, chosenXAxis, chosenYA
 console.log(circlesGroup)
   circlesGroup.transition()
     .duration(1000)
-    .attr("cx", d => newXScale(d[chosenXAxis]))
-    .attr("cy", d => newYScale(d[chosenYAxis]));
+    .attr("cx", d => newXScale(d.item_id))
+    .attr("cy", d => newYScale(d.nutritional_values.calories));
 
   return circlesGroup;
 }  
@@ -121,28 +131,28 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
     ylabel = "Calories"
   }
   else if (chosenYAxis === "carbohydrates_g") {
-      ylabel = "Carbohydrates (grams)";
+      ylabel = "Carbohydrates (g)";
   }
   else{
-    ylabel = "Sugars (grams)"
+    ylabel = "Protein (g)"
   }; 
   console.log(xlabel)
 
    // Initialize tool tip
-    //     var toolTip = d3.tip()
-    //       .attr("class", "d3-tip")
-    //       .offset([80, -60])
-    //       //distance from the circle
-    //       .html(function(d) {
-    //         // return (`${d.state}<br>Poverty: ${d.poverty}<br>Healthcare: ${d.healthcare}`);
-    //         return (`${d.item_name}<br>X: ${d[chosenXAxis]}<br>Y: ${d[chosenYAxis]}`);
-    //         });
-    // circlesGroup.call(toolTip);
+        var toolTip = d3.tip()
+          .attr("class", "d3-tip")
+          .offset([80, -60])
+          //distance from the circle
+          .html(function(d) {
+            // return (`${d.state}<br>Poverty: ${d.poverty}<br>Healthcare: ${d.healthcare}`);
+            return (`${d.item_name}<br>X: ${d.item_id}<br>Y: ${d.nutritional_values.calories}`);
+            });
+    circlesGroup.call(toolTip);
     // console.log("after line 143")
-    // circlesGroup.on("mouseover", function(data) {
-    //   console.log(data)
-    //   toolTip.show(data, this);
-    // })
+    circlesGroup.on("mouseover", function(data) {
+      // console.log(data)
+      toolTip.show(data, this);
+    })
   // onmouseout event
   .on("mouseout", function(data, index) {
     toolTip.hide(data);
@@ -150,11 +160,12 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
   return circlesGroup;
 }
       // xLinearScale function above csv import
-        var xLinearScale = xScale(nData, chosenXAxis);
-    
+        var xLinearScale = xScale(nutritionData, chosenXAxis);
+      
         // Create y scale functions
         var yLinearScale = d3.scaleLinear()
-          .domain([0, d3.max(nData, d => d[chosenYAxis])])
+
+          .domain([0, d3.max(nutritionData, d => d)])
           .range([height, 0]);
 
         // Initial axis function
@@ -228,23 +239,23 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
 
      // Append initial circles 
     // third y axis - Obese (%) "obesity"  
-    var sugarsLabel = ylabelsGroup.append("text")
+    var proteinLabel = ylabelsGroup.append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", 40 - margin.left)
       .attr("x", 0 - (height / 2))
-      .attr("value", "sugars_g")
+      .attr("value", "protein_g")
       .attr("dy", "1em")
       .classed("inactive", true)
-      .text("Sugar (g)");
+      .text("Protein (g)");
 
        
       let circlesGroup = chartGroup.selectAll("circle")
-        .data(nData)
+        .data(nutritionData)
         .enter()
         .append("circle")
         .classed("itemCircle", true)
-        .attr("cx", d => xLinearScale(d[chosenXAxis]))
-        .attr("cy", d => yLinearScale(d[chosenYAxis]))
+        .attr("cx", d => xLinearScale(d.item_id))
+        .attr("cy", d => yLinearScale(d.nutritional_values.calories))
         .attr("r", "15")
         // .append("text")
         .attr("opacity", ".5")
@@ -254,12 +265,12 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
         // .text(d=>(d.abbr));
         //added this for the state abbreviation text within the circle - this works in L1, but breaks everything in L2 - move to different location
         let itemLabels = chartGroup.selectAll(".itemText")
-        .data(nData)
+        .data(nutritionData)
         .enter()
         .append("text")
         .classed("itemText", true)
-        .attr("x", d=> xLinearScale(d[chosenXAxis]))
-        .attr("y", (d, i)=> yLinearScale(d[chosenYAxis]))
+        .attr("x", d=> xLinearScale(d.item_id))
+        .attr("y", (d, i)=> yLinearScale(d.nutritional_values.calories))
         .style("font-size", "15px")
         .style("text-anchor", "middle")
         .style("fill", "white")
@@ -267,8 +278,8 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
       
       function renderAbbr (itemLabels, xLinearScale, yLinearScale, chosenXAxis, chosenYAxis) {
         itemLabels.transition().duration(1000)
-        .attr("x", d=> xLinearScale(d[chosenXAxis]))
-        .attr("y", (d, i)=> yLinearScale(d[chosenYAxis]))
+        .attr("x", d=> xLinearScale(d.item_id))
+        .attr("y", (d, i)=> yLinearScale(d.nutritional_values.calories))
         return itemLabels;
       }
 
@@ -284,16 +295,16 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
 
         // replaces chosenXAxis with value
         chosenXAxis = value;
-
-        // console.log(chosenXAxis)
+      
+        console.log(chosenXAxis)
 
         // functions here found above csv import
         // updates x scale for new data
-        xLinearScale = xScale(nData, chosenXAxis);
+        xLinearScale = xScale(nutritionData, chosenXAxis);
 
         // updates x axis with transition
         xAxis = renderxAxes(xLinearScale, xAxis);
-
+        console.log(xAxis)
         // updates circles with new x values
         circlesGroup = renderCircles(circlesGroup, xLinearScale, yLinearScale, chosenXAxis, chosenYAxis);
 
@@ -355,7 +366,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
 
         // functions here found above csv import
         // updates y scale for new data
-        yLinearScale = yScale(nData, chosenYAxis);
+        yLinearScale = yScale(nutritionData, chosenYAxis);
 
         // updates y axis with transition
         yAxis = renderyAxes(yLinearScale, yAxis);
@@ -377,7 +388,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
         carbohydratesLabel
           .classed("active", false)
           .classed("inactive", true);
-        sugarLabel
+        proteinLabel
             .classed("active", false)
             .classed("inactive", true);
         }  
@@ -388,7 +399,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
             carbohydratesLabel
             .classed("active", true)
             .classed("inactive", false);
-            sugarLabel
+            proteinLabel
             .classed("active", false)
             .classed("inactive", true);
       }
@@ -399,7 +410,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
             carbohydratesLabel
             .classed("active", false)
             .classed("inactive", true);
-            sugarLabel
+            proteinLabel
             .classed("active", true)
             .classed("inactive", false);
     }
