@@ -22,11 +22,9 @@ var height = svgHeight - margin.top - margin.bottom;
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
 // Import Data
-// d3.csv("data.csv").then(function(healthData, err) {
-//   if (err) throw err;
-
 d3.json("/api/v1.0/nutrition").then(function(nData, err) {
   if (err) throw err;
+  console.log(document.getElementById("bubble"))
   // set the initial parameters for X axis
   var chosenXAxis = "mcdonalds";
   var nutritionData = nData.nutrition
@@ -102,16 +100,23 @@ function renderyAxes(newYScale, yAxis) {
 }
 
 // function used for updating circles group with a transition to new circles
-function renderCircles(circlesGroup, newXScale, newYScale, chosenXAxis, chosenYAxis) {
-console.log(circlesGroup)
-  circlesGroup.transition()
-    .duration(1000)
-    .attr("cx", d => newXScale(d.item_id))
-    .attr("cy", d => {
-      console.log(d.nutritional_values[chosenYAxis])
-      return newYScale(d.nutritional_values[chosenYAxis])});
+function renderCircles(newData, circlesGroup, newXScale, newYScale, chosenXAxis, chosenYAxis) {
+  circlesGroup = chartGroup.selectAll("circle").remove()
+  circlesGroup = chartGroup.selectAll("circle")
+  .data(newData)
+  .enter()
+  .append("circle")
+  .classed("itemCircle", true)
+.attr("cx", d => newXScale(d.item_id))
+.attr("cy", d => {
+console.log(d.nutritional_values[chosenYAxis])
 
-  return circlesGroup;
+return newYScale(d.nutritional_values[chosenYAxis])})
+  .attr("r", "10")
+  // .append("text")
+  .attr("opacity", ".5")
+
+    return circlesGroup;
 }  
 
 // function used for updating circles group with new tooltip
@@ -146,8 +151,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
           .offset([80, -60])
           //distance from the circle
           .html(function(d) {
-            // return (`${d.state}<br>Poverty: ${d.poverty}<br>Healthcare: ${d.healthcare}`);
-            return (`${d.item_name}<br>${chosenYAxis}: ${d.nutritional_values[chosenYAxis]}`);
+          return (`${d.item_name}<br>${chosenYAxis}: ${d.nutritional_values[chosenYAxis]}`);
             });
     circlesGroup.call(toolTip);
     // console.log("after line 143")
@@ -161,7 +165,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
   });
   return circlesGroup;
 }
-      // xLinearScale function above csv import
+      // call the chart building functions when page loads
         var xLinearScale = xScale(nutritionData, chosenXAxis);
       
         // Create y scale functions
@@ -219,7 +223,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
       var ylabelsGroup = chartGroup.append("g")  
       // .attr("transform", `translate(${width / 2}, ${height + 20})`);
 
-    // first y axis - healthcare
+    // first y axis
     var caloriesLabel = ylabelsGroup.append("text")
       .attr("transform", "rotate(-90)")  
       .attr("y", 0 - margin.left)
@@ -229,7 +233,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
       .classed("active", true)
       .text("Calories");
 
-    //second y axis - smokes
+    //second y axis
     var carbohydratesLabel = ylabelsGroup.append("text")
       .attr("transform", "rotate(-90)")  
       .attr("y", 20 - margin.left)
@@ -240,7 +244,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
       .text("Carbohydrates (g)");
 
      // Append initial circles 
-    // third y axis - Obese (%) "obesity"  
+    // third y axis  
     var proteinLabel = ylabelsGroup.append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", 40 - margin.left)
@@ -299,18 +303,23 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
 
         // replaces chosenXAxis with value
         chosenXAxis = value;
-      
-        console.log(chosenXAxis)
-
+        nutritionData = nData.nutrition
+        nutritionData = nutritionData.filter(nutrition=>nutrition.restaurant === chosenXAxis)
+        
+        
+        // console.log(chosenXAxis)
+        // console.log(nutritionData)
         // functions here found above csv import
         // updates x scale for new data
         xLinearScale = xScale(nutritionData, chosenXAxis);
 
         // updates x axis with transition
         xAxis = renderxAxes(xLinearScale, xAxis);
-        console.log(xAxis)
+        
+               
+        // console.log(xAxis)
         // updates circles with new x values
-        circlesGroup = renderCircles(circlesGroup, xLinearScale, yLinearScale, chosenXAxis, chosenYAxis);
+        circlesGroup = renderCircles(nutritionData, circlesGroup, xLinearScale, yLinearScale, chosenXAxis, chosenYAxis);
 
         // updates tooltips with new info
         circlesGroup = updateToolTip(chosenXAxis, chosenYAxis, circlesGroup);
@@ -376,7 +385,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
         yAxis = renderyAxes(yLinearScale, yAxis);
 
         // updates circles with new y values
-        circlesGroup = renderCircles(circlesGroup, xLinearScale, yLinearScale, chosenXAxis, chosenYAxis);
+        circlesGroup = renderCircles(nutritionData, circlesGroup, xLinearScale, yLinearScale, chosenXAxis, chosenYAxis);
 
         // updates tooltips with new info
         circlesGroup = updateToolTip(chosenXAxis, chosenYAxis, circlesGroup);
