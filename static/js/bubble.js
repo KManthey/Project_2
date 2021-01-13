@@ -1,5 +1,5 @@
 // Create an SVG wrapper, append an SVG group that will hold our chart, and shift the latter by left and top margins.
-var svgWidth = 960;
+var svgWidth = 1300;
 var svgHeight = 800;
     
     var margin = {
@@ -11,12 +11,12 @@ var svgHeight = 800;
     
 var width = svgWidth - margin.left - margin.right;
 var height = svgHeight - margin.top - margin.bottom;
+
     
 
     var svg = d3.select("#bubble")
       .append("svg")
-      .attr("width", svgWidth)
-      .attr("height", svgHeight);
+      .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
     
     var chartGroup = svg.append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
@@ -25,14 +25,13 @@ var height = svgHeight - margin.top - margin.bottom;
 d3.json("/api/v1.0/nutrition").then(function(nData, err) {
   if (err) throw err;
   console.log(document.getElementById("bubble"))
+ 
   // set the initial parameters for X axis
   var chosenXAxis = "mcdonalds";
   var nutritionData = nData.nutrition
   var restaurants = nData.restaurants
   nutritionData = nutritionData.filter(nutrition=>nutrition.restaurant === chosenXAxis)
-  // console.log(nutritionData)
-  // console.log(nutrition)
-  // console.log(restaurants)
+  
 // Parse Data/Cast as numbers
       nutritionData.forEach(function(nutrition) {
         // if (nutrition.restaurant === "chosenXAxis") {
@@ -47,13 +46,28 @@ d3.json("/api/v1.0/nutrition").then(function(nData, err) {
       nutrition.item_id = +nutrition.item_id
       // console.log(nutrition.item_id)
       });
-      
+
+// function to change circle colors
+function changeCircleColor(chosenOption){
+  var color = ""
+  switch(chosenOption)
+  {case "mcdonalds":
+  color = "mcdonaldsColor"
+  break;
+  case "starbucks":
+  color = "starbucksColor"
+  break;
+  case "subway":
+  color = "subwayColor"
+  break;
+  default:
+  color = "mcdonaldsColor";
+}
+  return color
+}
 
 // provide axis label click functionality to update x-scale
 function xScale(nutritionData, chosenXAxis) {
-  // console.log(chosenXAxis)
-  // console.log(nutritionData)
-  // create scales
   var xLinearScale = d3.scaleLinear()
           .domain([d3.min(nutritionData, d => d.item_id) * 0.8,
           d3.max(nutritionData, d => d.item_id) * 1.2])
@@ -106,10 +120,9 @@ function renderCircles(newData, circlesGroup, newXScale, newYScale, chosenXAxis,
   .data(newData)
   .enter()
   .append("circle")
-  .classed("itemCircle", true)
-.attr("cx", d => newXScale(d.item_id))
+  .classed(changeCircleColor(chosenXAxis), true)
+  .attr("cx", d => newXScale(d.item_id))
 .attr("cy", d => {
-console.log(d.nutritional_values[chosenYAxis])
 
 return newYScale(d.nutritional_values[chosenYAxis])})
   .attr("r", "10")
@@ -267,11 +280,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
         .attr("r", "10")
         // .append("text")
         .attr("opacity", ".5")
-        // .style("font-size", "15px")
-        // .style("text-anchor", "middle")
-        // .style("fill", "white")
-        // .text(d=>(d.abbr));
-        //added this for the state abbreviation text within the circle - this works in L1, but breaks everything in L2 - move to different location
+        
         let itemLabels = chartGroup.selectAll(".itemText")
         .data(nutritionData)
         .enter()
@@ -306,18 +315,12 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
         nutritionData = nData.nutrition
         nutritionData = nutritionData.filter(nutrition=>nutrition.restaurant === chosenXAxis)
         
-        
-        // console.log(chosenXAxis)
-        // console.log(nutritionData)
-        // functions here found above csv import
         // updates x scale for new data
         xLinearScale = xScale(nutritionData, chosenXAxis);
 
         // updates x axis with transition
         xAxis = renderxAxes(xLinearScale, xAxis);
         
-               
-        // console.log(xAxis)
         // updates circles with new x values
         circlesGroup = renderCircles(nutritionData, circlesGroup, xLinearScale, yLinearScale, chosenXAxis, chosenYAxis);
 
@@ -329,6 +332,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
 
         // changes classes to change bold text
         if (chosenXAxis === "starbucks") {
+          color = "starbucksColor"
           starbucksLabel
             .classed("active", true)
             .classed("inactive", false);
@@ -340,6 +344,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
             .classed("inactive", true);  
         }
         else if (chosenXAxis === "mcdonalds") {
+          color = "mcdonaldsColor"
           starbucksLabel
           .classed("active", false)
           .classed("inactive", true);
@@ -351,6 +356,7 @@ function updateToolTip(chosenXAxis, chosenYAxis, circlesGroup) {
             .classed("inactive", true);  
         }
         else {
+          color = "subwayColor"
           starbucksLabel
             .classed("active", false)
             .classed("inactive", true);

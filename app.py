@@ -1,4 +1,5 @@
 # Dependencies
+# Dependencies
 
 import numpy as np
 import sqlalchemy
@@ -13,7 +14,7 @@ from flask import Flask, render_template, redirect
 # Database Setup
 #################################################
 
-engine = create_engine("sqlite:///Resources/fastfood_nutritional_info.sqlite", echo=False)
+engine = create_engine("sqlite:///database/fastfood_nutritional_info.sqlite", echo=False)
 
 # reflect an existing database into a new model
 Base = automap_base()
@@ -43,7 +44,6 @@ def index():
     """Return the homepage."""
     ##return("hello")
     return render_template("index.html")
-
 
 # Define the route to "/nutrition"
 @app.route("/api/v1.0/nutrition")
@@ -156,7 +156,156 @@ def nutrition():
 
     
     return jsonify(item_names_dict)
+
+# Define the route to "/restaurants"
+@app.route("/api/v1.0/restaurants")
+
+def restaurants(): 
+    #Create the session (link) from Python to the DB
+    session= Session(engine)
+
+    sel = [Menu_items.item_name, Categories.category_name, Restaurants.name]
+    nutritional_info = session.query(*sel).filter(Nutrition.restaurant_id==Restaurants.id).\
+        filter(Nutrition.category_id==Categories.id).\
+        filter(Nutrition.item_id==Menu_items.id).all()
     
+    # Create dictionaries to store the information
+    # Main restaurant dictionary
+    restaurants = {}
+
+    # Dictionaries for each restaurants
+    mcdonalds_categories_dic = {}
+    subway_categories_dic = {}
+    starbucks_categories_dic = {}
+
+    # Lists for Mcdonalds categories
+    mc_desserts =[]
+    mc_beverages = []
+    mc_breakfast = []
+    mc_poultry_fish_sandwich_wraps = []
+    mc_salads = []
+    mc_snacks_and_sides = [ ]
+    mc_beef_and_pork_sandwich_wraps = []
+
+   # Lists for Subway categories
+    sb_desserts =[]
+    sb_bread_toppings = []
+    sb_breakfast = []
+    sb_poultry_fish_sandwich_wraps = []
+    sb_salads = []
+    sb_beef_and_pork_sandwich_wraps = []
+    sb_veggie_sandwich_wraps=[]
+
+  # Lists for Starbucks categories
+    stb_beverages = []
+    stb_veggie_sandwich_wraps=[]
+    stb_poultry_fish_sandwich_wraps = []
+    stb_breakfast = []
+    stb_salads = []
+    stb_bread_toppings = []
+    stb_desserts =[]
+    stb_beef_and_pork_sandwich_wraps = []
+    stb_other_food = []
+
+    for item in nutritional_info:
+        for restaurant in item:
+           if item[2] == "mcdonalds":
+               if item[1] == "desserts":
+                   mc_desserts.append(item[0])
+               elif item[1] == "beverages":
+                   mc_beverages.append(item[0])
+               elif item[1] == "breakfast":
+                   mc_breakfast.append(item[0])
+               elif item[1] == "poultry & fish sandwich/wraps":
+                   mc_poultry_fish_sandwich_wraps.append(item[0])
+               elif item[1] == "salads":
+                   mc_salads.append(item[0])
+               elif item[1] == "snacks & sides":
+                   mc_snacks_and_sides.append(item[0])
+               elif item[1] == "beef & pork sandwich/wraps":
+                   mc_beef_and_pork_sandwich_wraps.append(item[0])
+           elif item[2] == "subway":
+                if item[1] == "desserts":
+                    sb_desserts.append(item[0])
+                elif item[1] == "bread & toppings":
+                    sb_bread_toppings.append(item[0])
+                elif item[1] == "breakfast":
+                    sb_breakfast.append(item[0])
+                elif item[1] == "poultry & fish sandwich/wraps":
+                    sb_poultry_fish_sandwich_wraps.append(item[0])
+                elif item[1] == "salads":
+                    sb_salads.append(item[0])
+                elif item[1] == "beef & pork sandwich/wraps":
+                    sb_beef_and_pork_sandwich_wraps.append(item[0])
+                elif item[1] == "veggie sandwich/wraps":
+                    sb_veggie_sandwich_wraps.append(item[0])
+           elif item[2] == "starbucks":
+                if item[1] == "beverages":
+                    stb_beverages.append(item[0])
+                elif item[1] == "veggie sandwich/wraps":
+                    stb_veggie_sandwich_wraps.append(item[0])
+                elif item[1] == "poultry & fish sandwich/wraps":
+                    stb_poultry_fish_sandwich_wraps.append(item[0])
+                elif item[1] == "breakfast":
+                    stb_breakfast.append(item[0])
+                elif item[1] == "salads":
+                    stb_salads.append(item[0])
+                elif item[1] == "bread & toppings":
+                    stb_bread_toppings.append(item[0])
+                elif item[1] == "desserts":
+                    stb_desserts.append(item[0])
+                elif item[1] == "beef & pork sandwich/wraps":
+                    stb_beef_and_pork_sandwich_wraps.append(item[0])
+                elif item[1] == "other food":
+                    stb_other_food.append(item[0])
+    # Upper Case Function
+    def upper_case_first_letter(str):
+        return str.title()
+
+    # List Formatting Function
+    def list_formatting(lst):
+        return (sorted(list(set(map(upper_case_first_letter, lst)))))
+
+    # Add the list of categories to the McDonalds dictionary
+    mcdonalds_categories_dic["Desserts"] = list_formatting(mc_desserts)
+    mcdonalds_categories_dic["Beverages"] = list_formatting(mc_beverages)
+    mcdonalds_categories_dic["Breakfast"] = list_formatting(mc_breakfast)
+    mcdonalds_categories_dic["Poultry & Fish Sandwich/Wraps"] = list_formatting(mc_poultry_fish_sandwich_wraps)
+    mcdonalds_categories_dic["Salads"] = list_formatting(mc_salads)
+    mcdonalds_categories_dic["Beef and Pork Sandwich/Wraps"] = list_formatting(mc_beef_and_pork_sandwich_wraps)
+    mcdonalds_categories_dic["Snacks & Sides"] = list_formatting(mc_snacks_and_sides)
+
+    
+    # Add the list of categories to the Subway dictionary
+    subway_categories_dic["Desserts"] = list_formatting(sb_desserts)
+    subway_categories_dic["Bread & Toppings"] = list_formatting(sb_bread_toppings)
+    subway_categories_dic["Breakfast"] = list_formatting(sb_breakfast)
+    subway_categories_dic["Poultry & Fish Sandwich/Wraps"] = list_formatting(sb_poultry_fish_sandwich_wraps)
+    subway_categories_dic["Salads"] = list_formatting(sb_salads)
+    subway_categories_dic["Beef and Pork Sandwich/Wraps"] = list_formatting(sb_beef_and_pork_sandwich_wraps)
+    subway_categories_dic["Veggie & Sandwich/Wraps"] = list_formatting(sb_veggie_sandwich_wraps)
+
+    # Add the list of categories to the Startbuck dictionary
+    starbucks_categories_dic["Beverages"] = list_formatting(stb_beverages)
+    starbucks_categories_dic["Veggie & Sandwich/Wraps"] = list_formatting(stb_veggie_sandwich_wraps)
+    starbucks_categories_dic["Poultry & Fish Sandwich/Wraps"] = list_formatting(stb_poultry_fish_sandwich_wraps)
+    starbucks_categories_dic["Breakfast"] = list_formatting(stb_breakfast)
+    starbucks_categories_dic["Salads"] = list_formatting(stb_salads)
+    starbucks_categories_dic["Bread & Toppings"] = list_formatting(stb_bread_toppings)
+    starbucks_categories_dic["Desserts"] = list_formatting(stb_desserts)
+    starbucks_categories_dic["Beef and Pork Sandwich/Wraps"] = list_formatting(stb_beef_and_pork_sandwich_wraps)
+    starbucks_categories_dic["Other_Food"] = list_formatting(stb_other_food)
+
+
+    # Add the dictionaries to the main Restaurants ditionary
+    restaurants["McDonalds"] = mcdonalds_categories_dic
+    restaurants["Subway"] = subway_categories_dic
+    restaurants["Starbucks"] = starbucks_categories_dic
+
+    session.close
+
+    return jsonify(restaurants)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
